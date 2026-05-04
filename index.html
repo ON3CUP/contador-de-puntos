@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap');
+        body { background: transparent; margin: 0; padding: 20px; overflow: hidden; font-family: 'Oswald', sans-serif; }
+        .container { text-align: center; display: inline-block; }
+        .title { 
+            font-size: 35px; 
+            color: #ef4444; 
+            -webkit-text-stroke: 1.2px white; 
+            text-transform: uppercase; 
+            margin-bottom: -8px;
+            letter-spacing: 2px;
+        }
+        .numbers { 
+            font-size: 55px; 
+            color: #a855f7; 
+            -webkit-text-stroke: 1.2px white; 
+            text-shadow: 0 0 15px rgba(168, 85, 247, 0.8); 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">PUNTOS</div>
+        <div class="numbers"><span id="actual">0</span> / <span id="total">0</span></div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBS7uwcZNsSOMtfwIJzewDeACX22fWeaBY",
+        authDomain: "dbd-overlay.firebaseapp.com",
+        projectId: "dbd-overlay",
+        databaseURL: "https://dbd-overlay-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    db.ref('goal_data').on('value', (s) => {
+        const d = s.val();
+        if (d) {
+            document.getElementById('actual').innerText = (d.actual || 0).toLocaleString();
+            document.getElementById('total').innerText = (d.meta || 0).toLocaleString();
+        }
+    });
+</script>
+</body>
+</html>
