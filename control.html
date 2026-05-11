@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control de Puntos - DBD Pro</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: white; display: flex; justify-content: center; padding: 20px; }
+        .card { background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; width: 500px; }
+        .display { font-size: 35px; text-align: center; margin: 15px 0; color: #a855f7; font-weight: bold; background: #000; padding: 15px; border-radius: 8px; border: 1px solid #444; }
+        section { border-top: 1px solid #333; margin-top: 15px; padding-top: 15px; }
+        label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        select, input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; background: #222; color: white; border: 1px solid #444; box-sizing: border-box; font-size: 13px; }
+        button { width: 100%; padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 5px; }
+        .btn-bono { background: #10b981; color: white; }
+        .btn-killer { background: #991b1b; color: white; }
+        .btn-penal { background: #ef4444; color: white; }
+        .btn-custom { background: #3b82f6; color: white; }
+        .history-container { margin-top: 20px; background: #000; border-radius: 8px; border: 1px solid #222; max-height: 200px; overflow-y: auto; padding: 10px; }
+        .history-item { font-size: 11px; padding: 6px 0; border-bottom: 1px solid #222; display: flex; align-items: center; }
+        .item-info { flex-grow: 1; display: flex; justify-content: space-between; margin-right: 15px; }
+        .history-item span.pos { color: #10b981; }
+        .history-item span.neg { color: #ef4444; }
+        .del-btn { background: #222; color: #555; border: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; font-size: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; }
+        .del-btn:hover { background: #ef4444; color: white; }
+        .history-title { font-size: 10px; color: #555; text-transform: uppercase; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="display" id="preview">0 / 0</div>
+
+    <section>
+        <label>✨ Bonos Generales</label>
+        <select id="selectBono">
+            <option value="6000">4 Hooks antes Fase 2 (+6000 K)</option>
+            <option value="4000">8 Hooks (2 c/u vivo) (+4000 K)</option>
+            <option value="2000">2 Hooks en Sótano (+2000 K)</option>
+            <option value="2000">Salvada Linterna (+2000 S)</option>
+            <option value="3000">Granada o Petardo (+3000 S)</option>
+            <option value="1000">De Frente exitoso (+1000 S)</option>
+            <option value="3000">De Frente + Rescate (+3000 S)</option>
+            <option value="2000">Última Defensa (+2000 S)</option>
+            <option value="4000">Última Defensa + Rescate (+4000 S)</option>
+            <option value="2000">Salvada Pallet Stun (+2000 S)</option>
+            <option value="2000">Escape sin Hooks (+2000 S)</option>
+        </select>
+        <button onclick="aplicarAccion('selectBono')" class="btn-bono">Aplicar Bono General</button>
+    </section>
+
+    <section>
+        <label>🔪 Bonos Especiales de Killer</label>
+        <select id="selectKiller">
+            <option value="2000">Adiestradora: 3 Derribos Perro (+2000)</option>
+            <option value="4000">Animatrónico: Agarre en Puerta (+4000)</option>
+            <option value="2000">Arponero: 3 Arponazos Agonizantes (+2000)</option>
+            <option value="1000">Artista: 3 Cuervos Asesinos (+1000)</option>
+            <option value="2000">Bruja: Golpe tras Teletransporte (+2000)</option>
+            <option value="1000">Caballero: Guardia derriba 2 (+1000)</option>
+            <option value="2000">Canibal: 2 con Motosierra (+2000)</option>
+            <option value="4000">Canibal: 4 con Motosierra (+4000)</option>
+            <option value="4000">Cazadora: Orbital Impactado (+4000)</option>
+            <option value="2000">Cenobita: 3 Cubos Encontrados (+2000)</option>
+            <option value="1000">Cerda: Muerte por Casco (+1000)</option>
+            <option value="2000">Cerebro: Hug Tech (+2000)</option>
+            <option value="2000">Comerciante: 2 Heridos Drones (+2000)</option>
+            <option value="1000">Demogorgon: 4 Desmenuzar (+1000)</option>
+            <option value="2000">Desconocido: 4 Proyectil UVX (+2000)</option>
+            <option value="2000">Deterioro: Derribo 4to Rebote (+2000)</option>
+            <option value="2000">Doctor: 4 en Locura Máxima (+2000)</option>
+            <option value="2000">Draga: Captura Taquilla (+2000)</option>
+            <option value="2000">El Ghoul: 10 Agarres (+2000)</option>
+            <option value="2000">El Primero: 3 Bajo la Puerta (+2000)</option>
+            <option value="2000">Embaucador: 3 Evento Principal (+2000)</option>
+            <option value="2000">Enfermera: Interrupción Proyección (+2000)</option>
+            <option value="2000">Espectro: Interrupción tras Salir (+2000)</option>
+            <option value="2000">Espíritu: Interrupción Fantasma (+2000)</option>
+            <option value="1000">GhostFace: 3 Velo de la Noche (+1000)</option>
+            <option value="1000">Good Guy: 4 Trocear y Trinchar (+1000)</option>
+            <option value="2000">Krasue: 3 Latigazo Intestinal (+2000)</option>
+            <option value="1000">La Forma: Muerte Mal Encarnado (+1000)</option>
+            <option value="2000">Legion: 3 con 5to Golpe (+2000)</option>
+            <option value="2000">Liche: 3 Velo de Condenados (+2000)</option>
+            <option value="1000">Mellizos: Víctor derriba 2 (+1000)</option>
+            <option value="2000">Nemesis: Zombie derriba (+2000)</option>
+            <option value="2000">Oni: 3 en Furia Demoníaca (+2000)</option>
+            <option value="1000">Onryo: Muerte por Condena (+1000)</option>
+            <option value="1000">Payaso: 2 bajo Tónico (+1000)</option>
+            <option value="1000">Pesadilla: 2 Pallets Falsos (+1000)</option>
+            <option value="2000">Plaga: 3 Purga Corrupta (+2000)</option>
+            <option value="2000">Pueblerino: 5 Motosierrazos (+2000)</option>
+            <option value="2000">Señor Oscuro: 3 Hechizo Fuego (+2000)</option>
+            <option value="2000">Singularidad: 2 tras Teletransporte (+2000)</option>
+            <option value="2000">Trampero: 3 Trampas (+2000)</option>
+            <option value="1000">Verdugo: 3 Ritos de Sentencia (+1000)</option>
+            <option value="1000">Xenomorfo: 3 Ataque de Cola (+1000)</option>
+        </select>
+        <button onclick="aplicarAccion('selectKiller')" class="btn-killer">Aplicar Bono Killer</button>
+    </section>
+
+    <section>
+        <label>🎲 Ruleta de Selección</label>
+        <div id="ruletaDisplay" style="background: #000; border: 1px solid #a855f7; padding: 15px; border-radius: 8px; text-align: center; margin: 10px 0;">
+            <div id="killerNombre" style="font-size: 18px; font-weight: bold; color: #ef4444; min-height: 24px;">---</div>
+        </div>
+        <button onclick="iniciarRuleta()" class="btn-custom" style="background: #a855f7;">Girar Ruleta</button>
+    </section>
+
+    <section>
+        <label>⚠️ Penalizaciones</label>
+        <select id="selectPenal">
+            <option value="3000">500 Bits (-3000)</option>
+            <option value="8000">1000 Bits (-8000)</option>
+            <option value="20000">2000 Bits (-20000)</option>
+            <option value="10000">Meta de Subs (-10000)</option>
+        </select>
+        <button onclick="aplicarAccion('selectPenal', true)" class="btn-penal">Aplicar Penalización</button>
+    </section>
+
+    <section>
+        <label>⚙️ Ajustes Manuales</label>
+        <div style="display: flex; gap: 5px;">
+            <input type="number" id="customInput" placeholder="Puntos">
+            <input type="number" id="metaInput" placeholder="Meta">
+        </div>
+        <button onclick="aplicarManual()" class="btn-custom">Actualizar Marcador</button>
+    </section>
+
+    <div class="history-title">Historial</div>
+    <div class="history-container" id="historyLog"></div>
+    <button onclick="resetearTodo()" style="background:none; color:#444; font-size:9px; margin-top:10px;">Resetear Todo</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBS7uwcZNsSOMtfwIJzewDeACX22fWeaBY",
+        authDomain: "dbd-overlay.firebaseapp.com",
+        projectId: "dbd-overlay",
+        databaseURL: "https://dbd-overlay-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const ref = db.ref('goal_data');
+    const histRef = db.ref('goal_history');
+
+    let actual = 0; let meta = 0;
+
+    ref.on('value', (s) => {
+        const d = s.val() || {actual: 0, meta: 0};
+        actual = d.actual; meta = d.meta;
+        document.getElementById('preview').innerText = actual.toLocaleString() + " / " + meta.toLocaleString();
+    });
+
+    histRef.limitToLast(15).on('value', (s) => {
+        const log = document.getElementById('historyLog');
+        log.innerHTML = "";
+        const data = s.val();
+        if (data) {
+            Object.keys(data).reverse().forEach(key => {
+                const item = data[key];
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                const isPos = item.pts > 0;
+                div.innerHTML = `<div class="item-info"><span>${item.desc}</span><span class="${isPos ? 'pos' : 'neg'}">${isPos ? '+' : ''}${item.pts.toLocaleString()}</span></div><button class="del-btn" onclick="eliminarMovimiento('${key}', ${item.pts})">x</button>`;
+                log.appendChild(div);
+            });
+        }
+    });
+
+    function aplicarAccion(idSelect, esResta = false) {
+        const select = document.getElementById(idSelect);
+        const pts = parseInt(select.value);
+        const desc = select.options[select.selectedIndex].text.split(' (')[0];
+        const finalPts = esResta ? -pts : pts;
+        ref.update({ actual: actual + finalPts });
+        histRef.push({ desc: desc, pts: finalPts });
+    }
+
+    function aplicarManual() {
+        const custom = parseInt(document.getElementById('customInput').value);
+        const nMeta = parseInt(document.getElementById('metaInput').value);
+        if(!isNaN(custom)) {
+            ref.update({ actual: actual + custom });
+            histRef.push({ desc: 'Manual', pts: custom });
+            document.getElementById('customInput').value = "";
+        }
+        if(!isNaN(nMeta)) {
+            ref.update({ meta: nMeta });
+            document.getElementById('metaInput').value = "";
+        }
+    }
+
+    function eliminarMovimiento(id, pts) {
+        if(confirm("¿Eliminar registro?")) {
+            ref.update({ actual: actual - pts });
+            histRef.child(id).remove();
+        }
+    }
+
+    function resetearTodo() {
+        if(confirm("¿Borrar todo?")) {
+            ref.set({ actual: 0, meta: 0 });
+            histRef.remove();
+        }
+    }
+
+   function iniciarRuleta() {
+        const select = document.getElementById('selectKiller');
+        const killers = Array.from(select.options).map(opt => opt.text.split(':')[0].trim());
+        const listaUnica = [...new Set(killers)];
+        
+        let iteraciones = 0;
+        const maxIteraciones = 64; 
+        const display = document.getElementById('killerNombre');
+        const ruletaRef = db.ref('ruleta_spin');
+
+        const intervalo = setInterval(() => {
+            const temp = listaUnica[Math.floor(Math.random() * listaUnica.length)];
+            display.innerText = "🎲 " + temp;
+            ruletaRef.set({ nombre: temp, estado: "girando" });
+            iteraciones++;
+            
+            if (iteraciones >= maxIteraciones) {
+                clearInterval(intervalo);
+                const final = listaUnica[Math.floor(Math.random() * listaUnica.length)];
+                ruletaRef.set({ nombre: final, estado: "finalizado" });
+                display.innerHTML = `<span style="color: #10b981;">✨ ${final} ✨</span>`;
+                histRef.push({ desc: `RULETA: ${final}`, pts: 0 });
+                setTimeout(() => { ruletaRef.set(null); }, 5000);
+            }
+        }, 50); 
+    }
+</script>
+</body>
+</html>
