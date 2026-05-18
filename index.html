@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@900&display=swap');
+        
+        body { background: transparent; margin: 0; padding: 0; overflow: hidden; font-family: 'Oswald', sans-serif; display: flex; justify-content: center; }
+        .main-wrapper { display: flex; flex-direction: column; align-items: center; width: fit-content; margin-top: 20px; }
+        .container { text-align: center; }
+        .header-row, .counter-row { display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .decor-img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
+        .title { font-size: 35px; color: #ef4444; -webkit-text-stroke: 1.2px white; text-transform: uppercase; letter-spacing: 2px; margin: 0; }
+        .numbers { font-size: 55px; color: #a855f7; -webkit-text-stroke: 1.2px white; text-shadow: 0 0 15px rgba(168, 85, 247, 0.8); margin: 0; }
+        
+        /* ESTILOS DE LA RULETA VISUAL */
+        #ruleta-live { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: rgba(0,0,0,0.95); border: 4px solid #a855f7; 
+            padding: 20px; border-radius: 20px; text-align: center; z-index: 9999; 
+            display: none; width: 250px; box-shadow: 0 0 30px rgba(168, 85, 247, 0.6); 
+        }
+        .ruleta-window { 
+            height: 150px; overflow: hidden; position: relative; 
+            background: #111; border-radius: 10px; margin: 15px 0;
+            border: 2px solid #333;
+        }
+        #ruleta-strip { 
+            position: absolute; width: 100%; top: 0; left: 0; 
+            display: flex; flex-direction: column; align-items: center;
+            transition: transform 0.1s linear; 
+        }
+        .ruleta-item { 
+            height: 150px; width: 100%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; flex-shrink: 0; 
+        }
+        .ruleta-item img { width: 100px; height: 100px; object-fit: contain; }
+        .ruleta-item span { color: white; font-size: 18px; margin-top: 5px; text-transform: uppercase; }
+        
+        .selector-line {
+            position: absolute; top: 50%; width: 100%; height: 2px;
+            background: rgba(168, 85, 247, 0.5); transform: translateY(-50%); z-index: 2;
+        }
+
+        #notification-container { margin-top: 10px; width: 100%; display: flex; flex-direction: column; align-items: center; min-height: 80px; }
+       .toast { 
+    background: rgba(0, 0, 0, 0.9); 
+    border-bottom: 3px solid #10b981; 
+    color: white; 
+    padding: 12px 20px; /* Un pelín más de espacio */
+    border-radius: 4px; 
+    font-family: 'Inter', sans-serif; 
+    display: flex; 
+    gap: 18px; /* Un poco más de separación interna */
+    align-items: center; 
+    animation: fadeInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+    border: 1px solid #333; 
+}
+
+.toast.negative { 
+    border-bottom-color: #ef4444; 
+}
+
+.killer-icon { 
+    width: 60px;  /* ANTES: 45px (Un toque más grande para que se aprecie el personaje) */
+    height: 60px; /* ANTES: 45px */
+    object-fit: contain; 
+    filter: drop-shadow(0 0 5px #ef4444); 
+}
+
+.toast .points { 
+    font-size: 28px; /* ANTES: 24px (Ligeramente más grande) */
+    font-weight: 900; 
+    color: #fff; 
+}
+
+.toast .desc { 
+    font-size: 13px; /* ANTES: 11px (Un par de puntos más para que no quede diminuto) */
+    text-transform: uppercase; 
+    color: #aaa; 
+    letter-spacing: 0.5px; 
+    max-width: 200px; /* Un poquito más de margen de texto */
+    line-height: 1.1; 
+}        
+        @keyframes fadeInDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { to { transform: translateY(10px); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="header-row">
+                <img src="imag/decor-punto.png" class="decor-img">
+                <div class="title">PUNTOS</div>
+                <img src="imag/decor-punto.png" class="decor-img">
+            </div>
+            <div class="counter-row">
+                <img src="imag/decor-contador.png" class="decor-img">
+                <div class="numbers"><span id="actual">0</span> / <span id="total">0</span></div>
+                <img src="imag/decor-contador.png" class="decor-img">
+            </div>
+        </div>
+        <div id="notification-container"></div>
+    </div>
+
+    <div id="ruleta-live">
+        <div style="color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Sorteando Asesino</div>
+        <div class="ruleta-window">
+            <div class="selector-line"></div>
+            <div id="ruleta-strip"></div>
+        </div>
+        <div id="ganador-text" style="font-size: 22px; color: white; text-transform: uppercase; min-height: 30px;"></div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBS7uwcZNsSOMtfwIJzewDeACX22fWeaBY",
+        authDomain: "dbd-overlay.firebaseapp.com",
+        projectId: "dbd-overlay",
+        databaseURL: "https://dbd-overlay-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const alertSound = new Audio('sonidos/sonido.mp3'); 
+    const penalizacionSound = new Audio('sonidos/penalizacion.mp3'); 
+    const ruletaSound = new Audio('sonidos/ruleta.mp3'); 
+    const ganadorBaseSound = new Audio('sonidos/ganador.mp3'); // Sonido de respaldo para la ruleta
+
+    let sonandoRuleta = false;
+
+    const killerImages = {
+        "Trampero": "imag/trampero.png", "Canibal": "imag/canibal.png", "Onryo": "imag/onryo.png",
+        "Legion": "imag/legion.png", "Cerda": "imag/cerda.png", "Nemesis": "imag/nemesis.png",
+        "Draga": "imag/draga.png", "Pesadilla": "imag/pesadilla.png", "Cazadora": "imag/cazadora.png",
+        "Verdugo": "imag/verdugo.png", "Animatrónico": "imag/animatronico.png", "Pueblerino": "imag/pueblerino.png",
+        "Espíritu": "imag/espiritu.png", "Cenobita": "imag/cenobita.png", "Artista": "imag/artista.png",
+        "GhostFace": "imag/ghostface.png", "Cerebro": "imag/cerebro.png", "Caballero": "imag/caballero.png",
+        "Oni": "imag/oni.png", "Plaga": "imag/plaga.png", "Payaso": "imag/payaso.png",
+        "Enfermera": "imag/enfermera.png", "Singularidad": "imag/singularidad.png", "Comerciante": "imag/comerciante.png",
+        "Mellizos": "imag/mellizos.png", "Embaucador": "imag/embaucador.png", "Xenomorfo": "imag/xenomorfo.png",
+        "Desconocido": "imag/desconocido.png", "Liche": "imag/liche.png", "Señor Oscuro": "imag/senor-oscuro.png",
+        "Adiestradora": "imag/adiestradora.png", "Krasue": "imag/krasue.png", "El Primero": "imag/el-primero.png",
+        "Arponero": "imag/arponero.png", "La Forma": "imag/la-forma.png", "Good Guy": "imag/good-guy.png",
+        "Demogorgon": "imag/demogorgon.png", "El Ghoul": "imag/el-ghoul.png", "Espectro": "imag/espectro.png",
+        "Doctor": "imag/doctor.png", "Bruja": "imag/bruja.png", "Deterioro": "imag/deterioro.png"
+    };
+
+    // Convierte el nombre legible del Killer a un formato estándar de archivo de audio limpio
+    function getKillerAudioPath(nombreKiller) {
+        const nombreLimpio = nombreKiller
+            .toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remueve acentos
+            .replace(/\s+/g, '-') // Espacios por guiones
+            .replace(/[^a-z0-9-]/g, ''); // Remueve símbolos raros
+        return `sonidos/killers/${nombreLimpio}.mp3`;
+    }
+
+    // Lógica para reproducir el audio del Killer o usar el sonido por defecto en su defecto
+    function playKillerSound(nombreKiller, defaultSound) {
+        const audioPath = getKillerAudioPath(nombreKiller);
+        const killerAudio = new Audio(audioPath);
+        
+        killerAudio.play()
+            .catch(() => {
+                // Si el archivo del killer no se encuentra, usa el de respaldo
+                defaultSound.currentTime = 0;
+                defaultSound.play().catch(e => {});
+            });
+    }
+
+    db.ref('goal_data').on('value', (s) => {
+        const d = s.val();
+        if (d) {
+            document.getElementById('actual').innerText = (d.actual || 0).toLocaleString();
+            document.getElementById('total').innerText = (d.meta || 0).toLocaleString();
+        }
+    });
+
+    let initialLoad = true;
+    db.ref('goal_history').limitToLast(1).on('child_added', (snapshot) => {
+        if (initialLoad) {
+            setTimeout(() => { initialLoad = false; }, 2000);
+            return;
+        }
+        const data = snapshot.val();
+        showNotification(data.desc, data.pts);
+    });
+
+    function showNotification(desc, pts) {
+        // Ignora el log de texto directo de la ruleta (su sonido se maneja en el bloque del spin)
+        if (desc.startsWith("RULETA_GANADOR:")) return; 
+
+        const container = document.getElementById('notification-container');
+        container.innerHTML = "";
+        
+        let killerImgHtml = "";
+        let displayDesc = desc;
+        let esBonoKiller = false;
+        let nombreKiller = "";
+
+        if (desc.includes(':')) {
+            nombreKiller = desc.split(':')[0].trim();
+            const imgFile = killerImages[nombreKiller];
+            if (imgFile) { 
+                killerImgHtml = `<img src="${imgFile}" class="killer-icon">`; 
+                esBonoKiller = true;
+            }
+        } else if (desc === "Manual") {
+            displayDesc = "PARTIDA";
+        }
+
+        // CONTROL MULTI-AUDIO
+        if (esBonoKiller && pts > 0) {
+            // Sonido personalizado para el Bono del Killer
+            playKillerSound(nombreKiller, alertSound);
+        } else {
+            // Sonidos globales por defecto
+            const soundToPlay = pts < 0 ? penalizacionSound : alertSound;
+            soundToPlay.currentTime = 0;
+            soundToPlay.play().catch(e => {});
+        }
+
+        const toast = document.createElement('div');
+        const isNeg = pts < 0;
+
+        toast.className = `toast ${isNeg ? 'negative' : ''}`;
+        const puntosHtml = pts !== 0 ? `<span class="points">${isNeg ? '' : '+'}${pts.toLocaleString()}</span>` : `<span class="points">🎲</span>`;
+        toast.innerHTML = `${killerImgHtml}${puntosHtml}<span class="desc">${displayDesc}</span>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = "fadeOut 0.5s forwards";
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
+    }
+
+    db.ref('ruleta_spin').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const ruletaContainer = document.getElementById('ruleta-live');
+        const strip = document.getElementById('ruleta-strip');
+        const ganadorTxt = document.getElementById('ganador-text');
+
+        if (data) {
+            ruletaContainer.style.display = "block";
+            
+            if (data.estado === "girando") {
+                if (!sonandoRuleta) {
+                    ruletaSound.currentTime = 0;
+                    ruletaSound.play().catch(e => {});
+                    sonandoRuleta = true;
+                    ganadorTxt.innerText = "";
+                    ruletaContainer.style.borderColor = "#a855f7";
+                }
+                
+                if (data.pool && strip.children.length === 0) {
+                    strip.innerHTML = data.pool.map(k => `
+                        <div class="ruleta-item">
+                            <img src="${killerImages[k] || ''}">
+                            <span>${k}</span>
+                        </div>
+                    `).join('');
+                }
+
+                strip.style.transform = `translateY(-${data.currentIndex * 150}px)`;
+
+            } else if (data.estado === "finalizado") {
+                ruletaSound.pause();
+                ruletaSound.currentTime = 0;
+                sonandoRuleta = false;
+                
+                // Sonido personalizado cuando el Killer gana en la ruleta
+                playKillerSound(data.nombre, ganadorBaseSound);
+
+                strip.style.transform = `translateY(-${data.currentIndex * 150}px)`;
+                ganadorTxt.innerHTML = `<span style="color: #10b981;">¡${data.nombre}!</span>`;
+                ruletaContainer.style.borderColor = "#10b981";
+            }
+        } else {
+            ruletaContainer.style.display = "none";
+            strip.innerHTML = "";
+            sonandoRuleta = false;
+        }
+    });
+</script>
+</body>
+</html>
